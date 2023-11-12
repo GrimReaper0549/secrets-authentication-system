@@ -5,7 +5,8 @@ import axios from "axios";
 import bodyParser from "body-parser";
 import ejs from "ejs";
 import mongoose from 'mongoose';
-import encrypt from 'mongoose-encryption'
+// import encrypt from 'mongoose-encryption'
+import md5 from "md5"
 
 
 
@@ -22,7 +23,7 @@ const userSchema=new mongoose.Schema({
     password: String
 })
 
-userSchema.plugin(encrypt, {secret: process.env.SECRET_KEY, encryptedFields: ['password']});
+// userSchema.plugin(encrypt, {secret: process.env.SECRET_KEY, encryptedFields: ['password']});
 
 const User=mongoose.model("User", userSchema);
 
@@ -37,9 +38,9 @@ app.get("/login", (req, res)=>{
 app.post("/login", async (req, res)=>{
     const username=req.body.username
     const foundUser=await User.findOne({username: username});
-    console.log(foundUser);
+    // console.log(foundUser);
     if(foundUser){
-        if(foundUser.password==req.body.password){
+        if(foundUser.password==md5(req.body.password)){
             res.render("secrets");
         }
         else{
@@ -60,7 +61,7 @@ app.post("/register", (req, res)=>{
     const password=req.body.password
     const newUser=new User({
         username: username,
-        password: password
+        password: md5(password)
     })
     newUser.save();
     res.render("secrets");
