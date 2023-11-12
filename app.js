@@ -48,7 +48,8 @@ mongoose.connect("mongodb://localhost:27017/userDB");
 const userSchema=new mongoose.Schema({
     username: String,
     password: String,
-    googleId: String
+    googleId: String,
+    secret: String
 });
 
 userSchema.plugin(passportLocalMongoose);
@@ -142,14 +143,32 @@ app.get("/logout", (req, res)=>{
     res.redirect("/");
 })
 
-app.get("/secrets", (req, res)=>{
+app.get("/secrets", async(req, res)=>{
+    const foundUsers=await User.find({secret: {$ne: null}});
+    if(foundUsers){
+        res.render("secrets", {usersWithSecrets: foundUsers});
+    }
+});
+
+app.get("/submit", (req, res)=>{
     if(req.isAuthenticated()){
-        res.render("secrets");
+        res.render("submit");
     }
     else{
         res.redirect("/login");
     }
-})
+});
+
+app.post("/submit", async(req, res)=>{
+    const secretSubmitted=req.body.secret;
+    try{
+        const updatedUser=await User.findByIdAndUpdate(req.user.id, {secret: secretSubmitted}, {new: true});
+        res.redirect("/secrets");
+    } catch (err) {
+        console.log(err);
+        res.redirect("/login");
+    }
+});
 
 app.listen(port, ()=>{
     console.log(`Server started at Port ${port}`);
